@@ -27,7 +27,7 @@ goal = st.sidebar.text_area(
 
 if st.sidebar.button("💥 会話をリセットする"):
     st.session_state.clear()
-    st.experimental_rerun()
+    st.rerun()
 
 # -------------------------
 # メイン画面
