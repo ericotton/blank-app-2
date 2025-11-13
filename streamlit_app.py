@@ -1,15 +1,15 @@
 import streamlit as st
-from openai import OpenAI
+import openai
+from openai import OpenAI, RateLimitError
 
-# 🔑 Secrets に入れた APIキーを使ってクライアントを作成
+# 🔑 Secrets に入れた APIキーでクライアントを作成
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 st.title("💬 ChatGPTと会話するアプリ")
-st.write("OpenAI APIキーを使って、ChatGPT(GPT-4o)と会話できます。")
+st.write("OpenAI APIキーを使って、ChatGPT (GPT-4o) と会話します。")
 
 # セッション状態に会話履歴を保存
 if "messages" not in st.session_state:
-    # 最初に system メッセージを1つ入れておく
     st.session_state["messages"] = [
         {
             "role": "system",
@@ -17,7 +17,7 @@ if "messages" not in st.session_state:
         }
     ]
 
-# これまでの会話を表示（systemは画面表示しない）
+# これまでの会話を表示（systemは表示しない）
 for msg in st.session_state["messages"]:
     if msg["role"] == "system":
         continue
@@ -33,17 +33,28 @@ if user_input:
     st.session_state["messages"].append({"role": "user", "content": user_input})
     st.chat_message("user").write(user_input)
 
-    # Chat Completions API で返答生成
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=st.session_state["messages"],
-    )
+    try:
+        # Chat Completions API で返答生成
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=st.session_state["messages"],
+        )
+        assistant_reply = response.choices[0].message.content
 
-    # 返答テキストを取り出し
-    assistant_reply = response.choices[0].message.content
+        # 返答を履歴に追加＆表示
+        st.session_state["messages"].append(
+            {"role": "assistant", "content": assistant_reply}
+        )
+        st.chat_message("assistant").write(assistant_reply)
 
-    # 返答を履歴に追加＆表示
-    st.session_state["messages"].append(
-        {"role": "assistant", "content": assistant_reply}
-    )
-    st.chat_message("assistant").write(assistant_reply)
+    except RateLimitError as e:
+        st.error(
+            "❌ RateLimitError が発生しました。\n\n"
+            "・APIの無料枠／プリペイドクレジットを使い切った\n"
+            "・または利用上限（quota）を超えています。\n\n"
+            "Billing（請求）とUsage（使用量）を確認し、"
+            "必要であればクレジットの追加や有料プラン設定を行ってください。"
+        )
+    except Exception as e:
+        st.error("❌ 予期しないエラーが発生しました。")
+        st.write(str(e))
