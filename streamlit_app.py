@@ -49,11 +49,9 @@ if user_input:
 
     except RateLimitError as e:
         st.error(
-            "❌ RateLimitError が発生しました。\n\n"
-            "・APIの無料枠／プリペイドクレジットを使い切った\n"
-            "・または利用上限（quota）を超えています。\n\n"
-            "Billing（請求）とUsage（使用量）を確認し、"
-            "必要であればクレジットの追加や有料プラン設定を行ってください。"
+            "❌ APIの利用上限またはクレジット不足によりリクエストが拒否されました。\n\n"
+            "以下のページからクレジットを追加してください：\n"
+            "https://platform.openai.com/settings/organization/billing/overview"
         )
     except Exception as e:
         st.error("❌ 予期しないエラーが発生しました。")
